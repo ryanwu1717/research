@@ -162,9 +162,9 @@ class E_NeRV_Generator(nn.Module):
         # self.test2 = torch.nn.Conv1d(256, 144, 3, stride=1,padding=1)
 
         self.test  = nn.Sequential(
-                torch.nn.Conv1d(700, 300, 3, stride=1,padding=1),
+                torch.nn.Conv1d(1024, 350, 3, stride=1,padding=1),
                 torch.nn.ReLU(),
-                torch.nn.Conv1d(300, 144, 3, stride=1,padding=1),
+                torch.nn.Conv1d(350, 144, 3, stride=1,padding=1),
                 torch.nn.ReLU()
                 )
         
