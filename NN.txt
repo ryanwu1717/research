@@ -1,0 +1,143 @@
+ E_NeRV_Generator(
+  (pe_t): Positional Encoder: pos_b=1.25, pos_l=80, embed_length=160, to_embed=True
+  (stem_t): Sequential(
+    (0): Linear(in_features=160, out_features=512, bias=True)
+    (1): GELU()
+    (2): Linear(in_features=512, out_features=256, bias=True)
+    (3): GELU()
+  )
+  (pe_xy): Positional Encoder: pos_b=1.25, pos_l=80, embed_length=160, to_embed=True
+  (stem_xy): Sequential(
+    (0): Linear(in_features=320, out_features=256, bias=True)
+    (1): GELU()
+  )
+  (trans1): TransformerBlock(
+    (attn): Attention(
+      (attend): Softmax(dim=-1)
+      (to_qkv): Linear(in_features=256, out_features=192, bias=False)
+      (to_out): Sequential(
+        (0): Linear(in_features=64, out_features=256, bias=True)
+        (1): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (ffn): FeedForward(
+      (net): Sequential(
+        (0): Linear(in_features=256, out_features=128, bias=True)
+        (1): GELU()
+        (2): Dropout(p=0.0, inplace=False)
+        (3): Linear(in_features=128, out_features=256, bias=True)
+        (4): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (trans2): TransformerBlock(
+    (attn): Attention(
+      (attend): Softmax(dim=-1)
+      (to_qkv): Linear(in_features=256, out_features=1536, bias=False)
+      (to_out): Sequential(
+        (0): Linear(in_features=512, out_features=256, bias=True)
+        (1): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (ffn): FeedForward(
+      (net): Sequential(
+        (0): Linear(in_features=256, out_features=128, bias=True)
+        (1): GELU()
+        (2): Dropout(p=0.0, inplace=False)
+        (3): Linear(in_features=128, out_features=256, bias=True)
+        (4): Dropout(p=0.0, inplace=False)
+      )
+    )
+  )
+  (toconv): Sequential(
+    (0): Linear(in_features=256, out_features=112, bias=True)
+    (1): GELU()
+  )
+  (layers): ModuleList(
+    (0): Conv_Up_Block(
+      (conv1): NeRV_CustomConv(
+        (conv): Conv2d(112, 700, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (up_scale): PixelShuffle(upscale_factor=5)
+      )
+      (conv2): Conv2d(28, 336, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (norm): Identity()
+      (act): GELU()
+    )
+    (1): NeRVBlock(
+      (conv): NeRV_CustomConv(
+        (conv): Conv2d(336, 672, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (up_scale): PixelShuffle(upscale_factor=2)
+      )
+      (norm): Identity()
+      (act): GELU()
+    )
+    (2): NeRVBlock(
+      (conv): NeRV_CustomConv(
+        (conv): Conv2d(168, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (up_scale): PixelShuffle(upscale_factor=2)
+      )
+      (norm): Identity()
+      (act): GELU()
+    )
+    (3): NeRVBlock(
+      (conv): NeRV_CustomConv(
+        (conv): Conv2d(96, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (up_scale): PixelShuffle(upscale_factor=2)
+      )
+      (norm): Identity()
+      (act): GELU()
+    )
+    (4): NeRVBlock(
+      (conv): NeRV_CustomConv(
+        (conv): Conv2d(96, 96, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        (up_scale): PixelShuffle(upscale_factor=1)
+      )
+      (norm): Identity()
+      (act): GELU()
+    )
+  )
+  (head_layers): ModuleList(
+    (0): None
+    (1): None
+    (2): None
+    (3): None
+    (4): Conv2d(96, 3, kernel_size=(1, 1), stride=(1, 1))
+  )
+  (t_layers): ModuleList(
+    (0): Sequential(
+      (0): Linear(in_features=128, out_features=224, bias=True)
+      (1): GELU()
+    )
+    (1): Sequential(
+      (0): Linear(in_features=128, out_features=672, bias=True)
+      (1): GELU()
+    )
+    (2): Sequential(
+      (0): Linear(in_features=128, out_features=336, bias=True)
+      (1): GELU()
+    )
+    (3): Sequential(
+      (0): Linear(in_features=128, out_features=192, bias=True)
+      (1): GELU()
+    )
+    (4): Sequential(
+      (0): Linear(in_features=128, out_features=192, bias=True)
+      (1): GELU()
+    )
+  )
+  (norm_layers): ModuleList(
+    (0): InstanceNorm2d(112, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+    (1): InstanceNorm2d(336, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+    (2): InstanceNorm2d(168, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+    (3): InstanceNorm2d(96, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+    (4): InstanceNorm2d(96, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+  )
+  (pe_t_manipulate): Positional Encoder: pos_b=1.25, pos_l=80, embed_length=160, to_embed=True
+  (t_branch): Sequential(
+    (0): Linear(in_features=160, out_features=128, bias=True)
+    (1): GELU()
+    (2): Linear(in_features=128, out_features=128, bias=True)
+    (3): GELU()
+  )
+  (mse): MSELoss()
+)

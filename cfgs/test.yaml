@@ -1,0 +1,76 @@
+seed: 1  # same as the original NeRV repo
+dataset_path: ./data/bunny
+dataset_type: all 
+model:
+  model_name: E_NeRV
+  # pe related
+  pos_b: 1.25
+  pos_l: 80
+  xypos_b: 1.25
+  xypos_l: 80
+  pos_b_tm: 1.25
+  pos_l_tm: 80
+  stem_dim_num: '256'
+  fc_hw_dim: '9_16_196'
+  act: gelu
+  stride_list: [5, 2, 2, 2, 2]
+  expansion: 3
+  reduction: 2
+  lower_width: 96
+  num_blocks: 1
+  bias: true
+  norm: none
+  conv_type: conv
+  sin_res: true
+  sigmoid: true
+  block_dim: 256
+  mlp_dim: 128
+  additional_loss: false
+  additional_loss_weight: 100.0
+  2d_encoding_xy:
+    otype: DenseGrid
+    n_levels: 4
+    n_features_per_level: 2
+    log2_hashmap_size: 32
+    base_resolution: 16
+    per_level_scale: 1.35
+  2d_encoding_xt:
+    otype: DenseGrid
+    n_levels: 4
+    n_features_per_level: 2
+    log2_hashmap_size: 32
+    base_resolution: 16
+    per_level_scale: 1.35
+  2d_encoding_yt:
+    otype: DenseGrid
+    n_levels: 4
+    n_features_per_level: 2
+    log2_hashmap_size: 32
+    base_resolution: 16
+    per_level_scale: 1.35
+  3d_encoding:
+    otype: SparseGrid
+    n_features_per_level: 1
+    x_resolution: 25
+    y_resolution: 25
+    t_resolution: 50
+    upsample: false
+  network:
+    n_neurons: 32
+    n_hidden_layers: 2
+
+train_batchsize: 1
+val_batchsize: 1
+workers: 4
+epoch: 300
+optim:
+  optim_type: Adam
+  lr: 0.001
+  beta1: 0.9
+  beta2: 0.999
+  lr_schedule: warmup_cosine
+  lr_point: 0.2
+
+loss: Fusion6
+print_freq: 50 # every 50 steps in each epoch to print
+eval_freq: 50  # every 50 epochs to conduct evaluation

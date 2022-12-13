@@ -1,0 +1,16 @@
+
+train 
+bash scripts/newrun.sh ./cfgs/E-NeRV-bunny.yaml BB  29500
+
+eval
+bash scripts/eval.sh ./cfgs/E-NeRV-bunny.yaml tmpeval 29500 ./outputs/BB/checkpoint.pth 1 True
+
+train prune
+bash scripts/runprune.sh ./cfgs/E-NeRV-bunny.yaml prune_BB_60 29500 True ./outputs/BB/checkpoint.pth 0.4
+
+
+eval prune
+bash scripts/eval.sh ./cfgs/E-NeRV-bunny.yaml tmp 29500 ./outputs/prune_BB_60/checkpoint.pth 0.4 True
+
+evalcompression
+bash scripts/evalcompression.sh ./cfgs/E-NeRV-bunny.yaml tmp 29500 ./outputs/prune_BB_60/checkpoint.pth 0.4 8 0 True
