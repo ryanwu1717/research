@@ -85,7 +85,7 @@ class CustomDataSet(Dataset):
         print("data",data.shape)
         self.data = data.view(self.nframes, -1, self.channels) # [ f, w * h, 3]
         # batch 
-        self.N_samples = 1024 
+        self.N_samples = 144 
 
         half_dt =  0.5 / self.nframes
 

@@ -87,27 +87,27 @@ class E_NeRV_Generator(nn.Module):
         self.fc_h, self.fc_w, self.fc_dim = [int(x) for x in cfg['fc_hw_dim'].split('_')]
         self.block_dim = cfg['block_dim']
 
-        mlp_dim_list = [self.pe_t.embed_length] + stem_dim_list + [self.block_dim]
+        mlp_dim_list = [self.pe_t.embed_length] + stem_dim_list + [144]
         self.stem_t = NeRV_MLP(dim_list=mlp_dim_list, act=cfg['act'])
 
 
 
 
         # xy mapping
-        # xy_coord = torch.stack( 
-        #     torch.meshgrid(
-        #         torch.arange(self.fc_h) / self.fc_h, torch.arange(self.fc_w) / self.fc_w
-        #     ), dim=0
-        # ).flatten(1, 2)  # [2, h*w]
-        # self.xy_coord = nn.Parameter(xy_coord, requires_grad=False)
-        # self.pe_xy = PositionalEncoding(
-        #     pe_embed_b=cfg['xypos_b'], pe_embed_l=cfg['xypos_l']
-        # )
-        
+        xy_coord = torch.stack( 
+            torch.meshgrid(
+                torch.arange(self.fc_h) / self.fc_h, torch.arange(self.fc_w) / self.fc_w
+            ), dim=0
+        ).flatten(1, 2)  # [2, h*w]
+        self.xy_coord = nn.Parameter(xy_coord, requires_grad=False)
+        self.pe_xy = PositionalEncoding(
+            pe_embed_b=cfg['xypos_b'], pe_embed_l=cfg['xypos_l']
+        )
+        self.stem_xy = NeRV_MLP(dim_list=[2 * self.pe_xy.embed_length, self.block_dim ], act=cfg['act'])
         # self.stem_xy = NeRV_MLP(dim_list=[cfg['2d_encoding_xy']['n_levels'] * cfg['2d_encoding_xy']['n_features_per_level'], self.block_dim], act=cfg['act'])
-        # self.trans1 = TransformerBlock(
-        #     dim=self.block_dim, heads=1, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
-        # )
+        self.trans1 = TransformerBlock(
+            dim=self.block_dim  , heads=1, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
+        )
         self.trans2 = TransformerBlock(
             dim=self.block_dim, heads=8, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
         )
@@ -161,26 +161,26 @@ class E_NeRV_Generator(nn.Module):
         # self.test1 = torch.nn.Conv1d(512, 256, 3, stride=1,padding=1)
         # self.test2 = torch.nn.Conv1d(256, 144, 3, stride=1,padding=1)
 
-        self.test  = nn.Sequential(
-                torch.nn.Conv1d(1024, 350, 3, stride=1,padding=1),
-                torch.nn.ReLU(),
-                torch.nn.Conv1d(350, 144, 3, stride=1,padding=1),
-                torch.nn.ReLU()
-                )
+        # self.test  = nn.Sequential(
+        #         torch.nn.Conv1d(600, 200, 3, stride=1,padding=1),
+        #         torch.nn.ReLU(),
+        #         torch.nn.Conv1d(200, 144, 3, stride=1,padding=1),
+        #         torch.nn.ReLU()
+        #         )
         
         #add 
         # learnable keyframes xy
-        self.keyframes_xy = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_xy"])    
-        assert self.keyframes_xy.dtype == torch.float32
-        # learnable keyframes yt
-        self.keyframes_yt = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_yt"]) # torch.Tensor       
-        assert self.keyframes_yt.dtype == torch.float32
+        # self.keyframes_xy = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_xy"])    
+        # assert self.keyframes_xy.dtype == torch.float32
+        # # learnable keyframes yt
+        # self.keyframes_yt = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_yt"]) # torch.Tensor       
+        # assert self.keyframes_yt.dtype == torch.float32
 
-        # learnable keyframes xt
-        self.keyframes_xt = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_xt"]) # torch.Tensor     
-        assert self.keyframes_xt.dtype == torch.float32
+        # # learnable keyframes xt
+        # self.keyframes_xt = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_xt"]) # torch.Tensor     
+        # assert self.keyframes_xt.dtype == torch.float32
 
-        out_features = 256
+        out_features = 196
         self.net = modulation.SirenNet(
                                     dim_in = 1, # input dimension, ex. 2d coor
                                     dim_hidden = cfg["network"]["n_neurons"],       # hidden dimension
@@ -190,18 +190,18 @@ class E_NeRV_Generator(nn.Module):
                                                                                                  # different omega_0 in the first layer                                                               #  - this is a hyperparameter
                                     )
                                     
-        self.sparse_grid = SparseGrid(level_dim=cfg["3d_encoding"]["n_features_per_level"], 
-                                    x_resolution=cfg["3d_encoding"]["x_resolution"],
-                                    y_resolution=cfg["3d_encoding"]["y_resolution"],
-                                    t_resolution=cfg["3d_encoding"]["t_resolution"], 
-                                    upsample=cfg["3d_encoding"]["upsample"]
-                                    )
-        latent_dim = cfg["2d_encoding_xy"]["n_levels"]*(cfg["2d_encoding_xy"]["n_features_per_level"])
-        latent_dim += cfg["2d_encoding_yt"]["n_levels"]*(cfg["2d_encoding_yt"]["n_features_per_level"])
-        latent_dim += cfg["2d_encoding_xt"]["n_levels"]*(cfg["2d_encoding_xt"]["n_features_per_level"])
-        latent_dim += (cfg["3d_encoding"]["n_features_per_level"])*9
+        # self.sparse_grid = SparseGrid(level_dim=cfg["3d_encoding"]["n_features_per_level"], 
+        #                             x_resolution=cfg["3d_encoding"]["x_resolution"],
+        #                             y_resolution=cfg["3d_encoding"]["y_resolution"],
+        #                             t_resolution=cfg["3d_encoding"]["t_resolution"], 
+        #                             upsample=cfg["3d_encoding"]["upsample"]
+        #                             )
+        # latent_dim = cfg["2d_encoding_xy"]["n_levels"]*(cfg["2d_encoding_xy"]["n_features_per_level"])
+        # latent_dim += cfg["2d_encoding_yt"]["n_levels"]*(cfg["2d_encoding_yt"]["n_features_per_level"])
+        # latent_dim += cfg["2d_encoding_xt"]["n_levels"]*(cfg["2d_encoding_xt"]["n_features_per_level"])
+        # latent_dim += (cfg["3d_encoding"]["n_features_per_level"])*9
 
-        self.wrapper = modulation.SirenWrapper(self.net, latent_dim = latent_dim)
+        self.wrapper = modulation.SirenWrapper(self.net, latent_dim = 256)
 
     def fuse_t(self, x, t):
         # x: [B, C, H, W], normalized among C
@@ -226,29 +226,30 @@ class E_NeRV_Generator(nn.Module):
         t_emb = self.stem_t(self.pe_t(t)) # [B, L]
         t_manipulate = self.t_branch(self.pe_t_manipulate(t))
 
-        # xy_coord = self.xy_coord
-        # # print
-        # x_coord = self.pe_xy(xy_coord[0])    # [h*w, C]
-        # y_coord = self.pe_xy(xy_coord[1])    # [h*w, C]
-        # print("xy_coord",xy_coord[0].shape)
-        # print("x_coord",x_coord.shape)
-        # print("y_coord",y_coord.shape)
-        # xy_emb = torch.cat([x_coord, y_coord], dim=1)
+        xy_coord = self.xy_coord
+        x_coord = self.pe_xy(xy_coord[0])    # [h*w, C]
+        y_coord = self.pe_xy(xy_coord[1])    # [h*w, C]
+        xy_emb = torch.cat([x_coord, y_coord], dim=1)
+
+        # xy_emb = self.stem_xy(xy_emb).unsqueeze(0).expand(t_emb.shape[0], -1, -1)  # [B, h*w, L]
+        xy_emb = self.stem_xy(xy_emb).expand(t_emb.shape[0], -1, -1).squeeze(0)  # [B, h*w, L]
         # print("xy_emb",xy_emb.shape)
-        #add
-        tmpxy = all_coords[:, [1, 2]]
-        xt_coords = all_coords[:, [0, 1]]
-        yt_coords = all_coords[:, [0, 2]]
+        # xy_emb = self.trans1(xy_emb).squeeze(0)
+        # print("xy_emb",xy_emb.shape)
+        # add
+        # tmpxy = all_coords[:, [1, 2]]
+        # xt_coords = all_coords[:, [0, 1]]
+        # yt_coords = all_coords[:, [0, 2]]
 
-        spatial_embedding_xy = self.keyframes_xy(tmpxy)
-        spatial_embedding_xt = self.keyframes_xt(xt_coords)
-        spatial_embedding_yt = self.keyframes_yt(yt_coords) 
+        # spatial_embedding_xy = self.keyframes_xy(tmpxy)
+        # spatial_embedding_xt = self.keyframes_xt(xt_coords)
+        # spatial_embedding_yt = self.keyframes_yt(yt_coords) 
         
-        spatial_embedding = torch.cat((spatial_embedding_xy, spatial_embedding_yt, spatial_embedding_xt), dim=1)
-        motion_embedding = self.sparse_grid(all_coords)
+        # spatial_embedding = torch.cat((spatial_embedding_xy, spatial_embedding_yt, spatial_embedding_xt), dim=1)
+        # motion_embedding = self.sparse_grid(all_coords)
 
 
-        embedding = torch.cat((spatial_embedding, motion_embedding), dim=1)
+        # embedding = torch.cat((spatial_embedding, motion_embedding), dim=1)
         # print("embedding",embedding.shape)
 
         # permute_xy = tmpxy.permute(1,0)
@@ -274,9 +275,10 @@ class E_NeRV_Generator(nn.Module):
         # print("xy_emb ",spatial_embedding_xy.shape )
         # embedding = spatial_embedding_xy.squeeze(0)
         # spatial_embedding = torch.cat((spatial_embedding_xy, spatial_embedding_yt, spatial_embedding_xt), dim=1)
-        
-        xy_emb = self.wrapper(coords=timesteps, latent=embedding).unsqueeze(0)
-        xy_emb = self.test(xy_emb)
+        # print("timesteps",timesteps.shape)
+        # 
+        emb = self.wrapper(coords=t_emb.permute(1,0), latent=xy_emb).unsqueeze(0)
+        # xy_emb = self.test(xy_emb)
         # xy_emb = self.test1(xy_emb)
         # print("tmpoutput",xy_emb.shape)
         #original
@@ -287,13 +289,13 @@ class E_NeRV_Generator(nn.Module):
         # xy_emb = self.trans1(xy_emb)
 
         # fuse t into xy map
-        t_emb_list = [t_emb for i in range(xy_emb.shape[1])]
-        t_emb_map = torch.stack(t_emb_list, dim=1)  # [B, h*w, L]
-        emb = xy_emb * t_emb_map
+        # t_emb_list = [t_emb for i in range(xy_emb.shape[1])]
+        # t_emb_map = torch.stack(t_emb_list, dim=1)  # [B, h*w, L]
+        # emb = xy_emb * t_emb_map
 
         # print("tmp",self.trans2(emb).shape)
 
-        emb = self.toconv(self.trans2(emb))
+        # emb = self.toconv(self.trans2(emb))
         # print("emb",emb.shape)
 
 

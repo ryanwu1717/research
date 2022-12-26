@@ -1,5 +1,5 @@
 seed: 1  # same as the original NeRV repo
-dataset_path: ./data/bunny
+dataset_path: ./data/bunny/
 dataset_type: all 
 model:
   model_name: E_NeRV
@@ -13,7 +13,7 @@ model:
   stem_dim_num: '256'
   fc_hw_dim: '9_16_196'
   act: gelu
-  stride_list: [5, 2, 2, 2, 2]
+  stride_list: [5, 2, 2,2,2]
   expansion: 3
   reduction: 2
   lower_width: 96
@@ -56,15 +56,15 @@ model:
     t_resolution: 50
     upsample: false
   network:
-    n_neurons: 32
-    n_hidden_layers: 2
+    n_neurons: 256
+    n_hidden_layers: 1
 
 train_batchsize: 1
 val_batchsize: 1
 workers: 4
 epoch: 300
 optim:
-  optim_type: Adam
+  optim_type: AdamW
   lr: 0.001
   beta1: 0.9
   beta2: 0.999
