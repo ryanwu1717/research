@@ -87,8 +87,8 @@ class E_NeRV_Generator(nn.Module):
         self.fc_h, self.fc_w, self.fc_dim = [int(x) for x in cfg['fc_hw_dim'].split('_')]
         self.block_dim = cfg['block_dim']
 
-        mlp_dim_list = [self.pe_t.embed_length] + stem_dim_list + [144]
-        self.stem_t = NeRV_MLP(dim_list=mlp_dim_list, act=cfg['act'])
+        # mlp_dim_list = [self.pe_t.embed_length] + stem_dim_list + [576]
+        # self.stem_t = NeRV_MLP(dim_list=mlp_dim_list, act=cfg['act'])
 
 
 
@@ -103,13 +103,13 @@ class E_NeRV_Generator(nn.Module):
         self.pe_xy = PositionalEncoding(
             pe_embed_b=cfg['xypos_b'], pe_embed_l=cfg['xypos_l']
         )
-        self.stem_xy = NeRV_MLP(dim_list=[2 * self.pe_xy.embed_length, self.block_dim ], act=cfg['act'])
+        self.stem_xy = NeRV_MLP(dim_list=[2 * self.pe_xy.embed_length, self.block_dim ,128], act=cfg['act'])
         # self.stem_xy = NeRV_MLP(dim_list=[cfg['2d_encoding_xy']['n_levels'] * cfg['2d_encoding_xy']['n_features_per_level'], self.block_dim], act=cfg['act'])
-        self.trans1 = TransformerBlock(
-            dim=self.block_dim  , heads=1, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
-        )
+        # self.trans1 = TransformerBlock(
+        #     dim=self.block_dim  , heads=1, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
+        # )
         self.trans2 = TransformerBlock(
-            dim=self.block_dim, heads=8, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
+            dim=self.fc_dim , heads=8, dim_head=64, mlp_dim=cfg['mlp_dim'], dropout=0., prenorm=False
         )
         if self.block_dim == self.fc_dim:
             self.toconv = nn.Identity()
@@ -180,7 +180,7 @@ class E_NeRV_Generator(nn.Module):
         # self.keyframes_xt = tcnn.Encoding(n_input_dims=2, encoding_config=cfg["2d_encoding_xt"]) # torch.Tensor     
         # assert self.keyframes_xt.dtype == torch.float32
 
-        out_features = 196
+        out_features = 198
         self.net = modulation.SirenNet(
                                     dim_in = 1, # input dimension, ex. 2d coor
                                     dim_hidden = cfg["network"]["n_neurons"],       # hidden dimension
@@ -201,7 +201,7 @@ class E_NeRV_Generator(nn.Module):
         # latent_dim += cfg["2d_encoding_xt"]["n_levels"]*(cfg["2d_encoding_xt"]["n_features_per_level"])
         # latent_dim += (cfg["3d_encoding"]["n_features_per_level"])*9
 
-        self.wrapper = modulation.SirenWrapper(self.net, latent_dim = 256)
+        self.wrapper = modulation.SirenWrapper(self.net, latent_dim = 128)
 
     def fuse_t(self, x, t):
         # x: [B, C, H, W], normalized among C
@@ -223,7 +223,7 @@ class E_NeRV_Generator(nn.Module):
         all_coords = all_coords.view(-1, 3) # t, x, y
         t = input_id
 
-        t_emb = self.stem_t(self.pe_t(t)) # [B, L]
+        t_emb = (self.pe_t(t)) # [B, L]
         t_manipulate = self.t_branch(self.pe_t_manipulate(t))
 
         xy_coord = self.xy_coord
@@ -296,6 +296,7 @@ class E_NeRV_Generator(nn.Module):
         # print("tmp",self.trans2(emb).shape)
 
         # emb = self.toconv(self.trans2(emb))
+        # emb = self.trans2(emb)
         # print("emb",emb.shape)
 
 

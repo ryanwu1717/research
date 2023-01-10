@@ -1,19 +1,19 @@
 seed: 1  # same as the original NeRV repo
-dataset_path: ./data/bunny/
+dataset_path: ../data/UVG/tmp/
 dataset_type: all 
 model:
   model_name: E_NeRV
   # pe related
   pos_b: 1.25
-  pos_l: 80
+  pos_l: 72
   xypos_b: 1.25
-  xypos_l: 80
+  xypos_l: 72
   pos_b_tm: 1.25
-  pos_l_tm: 80
+  pos_l_tm: 72
   stem_dim_num: '256'
-  fc_hw_dim: '9_16_196'
+  fc_hw_dim: '9_16_198'
   act: gelu
-  stride_list: [5, 2, 2,2,2]
+  stride_list: [5, 2, 2, 2,2]
   expansion: 3
   reduction: 2
   lower_width: 96
